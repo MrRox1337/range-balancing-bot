@@ -15,7 +15,7 @@ double Ki = 0.4;     // Integral gain
 double Kd = 12.0;    // Derivative gain
 
 double setPoint = 15.0;  // Target distance (cm)
-double setpointVariance = 2.0; // Acceptable deviation (cm)
+double setpointVariance = 0.0; // Acceptable deviation (cm)
 double Input;            // Measured distance
 double Output;           // Motor speed (0–255)
 
@@ -70,10 +70,10 @@ void loop() {
     if (Input < 1.0) { // No reading
       stopMotors();
     } 
-    else if (Input > setPoint + 2) {
+    else if (Input > setPoint + setpointVariance) {
       moveForward(Output); // Move forward faster when far
     } 
-    else if (Input < setPoint - 2) {
+    else if (Input < setPoint - setpointVariance) {
       moveBackward(Output); // Move backward gently when too close
     } 
     else {
