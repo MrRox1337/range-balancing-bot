@@ -10,12 +10,12 @@
 #define in4 2
 
 // === PID Variables ===
-double Kp = 4.0-0.05-0.05-0.2-0.1-0.01-0.01-0.01;    // Proportional gain
+double Kp = 1.5;    // Proportional gain
 double Ki = 0.80;     // Integral gain
-double Kd = 1.1+0.02;    // Derivative gain
+double Kd = 1.2;    // Derivative gain
 
-double setPoint = 15.0;  // Target distance (cm)
-double setpointVariance = 0.3; // Acceptable deviation (cm)
+double setPoint = 25.0;  // Target distance (cm)
+double setpointVariance = 0.5; // Acceptable deviation (cm)
 double Input;            // Measured distance
 double Output;           // Motor speed (0–255)
 
@@ -23,7 +23,7 @@ double propError;
 double lastPropError = 0;
 double integralError = 0;
 double diffError;
-const double outputLimitMin = 105;
+const double outputLimitMin = 125;
 const double outputLimitMax = 255;
 
 unsigned long currentTime;
@@ -118,7 +118,7 @@ double computePID() {
 
 // === Motor Control ===
 void moveForward(double speed) {
-  analogWrite(enA, speed);
+  analogWrite(enA, speed*0.9);
   analogWrite(enB, speed);
 
   digitalWrite(in1, HIGH);
@@ -130,7 +130,7 @@ void moveForward(double speed) {
 }
 
 void moveBackward(double speed) {
-  analogWrite(enA, speed);
+  analogWrite(enA, speed*0.9);
   analogWrite(enB, speed);
 
   digitalWrite(in1, LOW);
