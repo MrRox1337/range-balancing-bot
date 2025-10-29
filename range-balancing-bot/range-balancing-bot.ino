@@ -10,11 +10,12 @@
 #define in4 2
 
 // === PID Variables ===
-double Kp = 4.0-0.05-0.05-0.2-0.1-0.01-0.01-0.01;    // Proportional gain
-double Ki = 0.80;     // Integral gain
-double Kd = 1.1+0.02;    // Derivative gain
+// double Kp = 4.0-0.05-0.05-0.1-0.01-0.01-0.01;    // Proportional gain
+double Kp = 10;    // Proportional gain
+double Ki = 0.85;     // Integral gain
+double Kd = 4.4;    // Derivative gain
 
-double setPoint = 15.0;  // Target distance (cm)
+double setPoint = 12.0;  // Target distance (cm)
 double setpointVariance = 0.3; // Acceptable deviation (cm)
 double Input;            // Measured distance
 double Output;           // Motor speed (0–255)
