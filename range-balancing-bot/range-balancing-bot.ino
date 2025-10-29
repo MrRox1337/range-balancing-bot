@@ -10,12 +10,12 @@
 #define in4 2
 
 // === PID Variables ===
-double Kp = 25.0;    // Proportional gain
-double Ki = 0.4;     // Integral gain
-double Kd = 12.0;    // Derivative gain
+double Kp = 4.0-0.05-0.05-0.2-0.1-0.01-0.01-0.01;    // Proportional gain
+double Ki = 0.80;     // Integral gain
+double Kd = 1.1+0.02;    // Derivative gain
 
 double setPoint = 15.0;  // Target distance (cm)
-double setpointVariance = 0.0; // Acceptable deviation (cm)
+double setpointVariance = 0.3; // Acceptable deviation (cm)
 double Input;            // Measured distance
 double Output;           // Motor speed (0–255)
 
@@ -23,7 +23,7 @@ double propError;
 double lastPropError = 0;
 double integralError = 0;
 double diffError;
-const double outputLimitMin = 0;
+const double outputLimitMin = 105;
 const double outputLimitMax = 255;
 
 unsigned long currentTime;
@@ -59,15 +59,17 @@ void loop() {
 
   if ((currentTime - previousTime) >= (SAMPLE_TIME_SEC * 1000)) {
     Input = getDistance();        // Get current distance
-    Output = computePID();        // Compute speed output (0–255)
+    Output = computePID();        // Compute speed output (105–255)
+
     previousTime = currentTime;
 
     Serial.print("Dist: "); Serial.print(Input);
     Serial.print(" cm | Error: "); Serial.print(propError);
-    Serial.print(" | PWM: "); Serial.println(Output);
+    Serial.print(" | PWM: "); Serial.print(Output);
+    Serial.print(" | Motion: ");
 
     // --- Control logic based on distance ---
-    if (Input < 1.0) { // No reading
+    if (Input < 1.0) { // No reading, safety system
       stopMotors();
     } 
     else if (Input > setPoint + setpointVariance) {
@@ -116,27 +118,27 @@ double computePID() {
 
 // === Motor Control ===
 void moveForward(double speed) {
-  analogWrite(enA, (int)speed);
-  analogWrite(enB, (int)speed);
+  analogWrite(enA, speed);
+  analogWrite(enB, speed);
 
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
 
-  Serial.println("Moving Forward");
+  Serial.println("Forward");
 }
 
 void moveBackward(double speed) {
-  analogWrite(enA, (int)speed);
-  analogWrite(enB, (int)speed);
+  analogWrite(enA, speed);
+  analogWrite(enB, speed);
 
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
 
-  Serial.println("Moving Backward");
+  Serial.println("Forward");
 }
 
 void stopMotors() {
