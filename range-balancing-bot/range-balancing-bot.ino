@@ -24,8 +24,8 @@ double propError;
 double lastPropError = 0;
 double integralError = 0;
 double diffError;
-const double outputLimitMin = 105;
-const double outputLimitMax = 255;
+const double outputLimitMin = 125;
+const double outputLimitMax = 225;
 
 unsigned long currentTime;
 unsigned long previousTime = 0;
