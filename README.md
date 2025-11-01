@@ -76,62 +76,106 @@ Critical safety protocols has to be embedded in the software, including output c
 ### Phase 2: Conveyor Integration
 
 1. **Mechanical Assembly**
+
    - Mount NEMA stepper motor to frame
    - Couple motor shaft to drive roller
    - Install and tension conveyor belt
    - Mount A4988 driver and potentiometer
 
 2. **Electronic Setup**
-   - Connect A4988 STEP/DIR pins to Arduino digital pins
-   - Wire potentiometer to Arduino analog input
-   - Connect stepper motor to A4988 outputs
-   - **Important**: Wire 12V power supply to A4988 Vcc/GND
 
-3. **Testing**
-   - Write test sketch for basic functionality
-   - Implement potentiometer reading (0-1023 range)
-   - Map values to stepper motor delay times
-   - Verify speed control via potentiometer
+   ```cpp
+   // Pin Configuration
+   const int dirPin = 5;    // Stepper direction pin
+   const int stepPin = 6;   // Stepper step pin
+   const int potPin = A3;   // Potentiometer input
+
+   // Speed Parameters
+   const int minSpeed = 200;
+   const int maxSpeed = 1000;
+   ```
+
+3. **Control Implementation**
+
+   ```cpp
+   #include <AccelStepper.h>
+
+   // Initialize stepper with driver pins
+   AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
+
+   void setup() {
+     stepper.setMaxSpeed(maxSpeed);
+     stepper.setSpeed(800);  // Initial speed
+   }
+
+   void loop() {
+     // Read and map potentiometer value
+     int potValue = analogRead(potPin);
+     long stepSpeed = map(potValue, 0, 1023, minSpeed, maxSpeed);
+
+     // Update and run stepper
+     stepper.setSpeed(stepSpeed);
+     stepper.runSpeed();
+   }
+   ```
 
 ### Phase 3: PID Implementation
 
-1. **Control Loop Setup**
+1. **System Configuration**
+
    ```cpp
-   // Constants
-   const float SETPOINT_CM = 12.0;
-   
-   // PID Gains
-   double Kp = 1.0;   // Proportional
-   double Ki = 0.15;  // Integral
-   double Kd = 0.04;  // Derivative
+    // Pin Definitions
+    #define trigPin 6
+    #define echoPin 5
+    #define enA 10
+    #define in1 9
+    #define in2 8
+    #define enB 3
+    #define in3 4
+    #define in4 2
+
+    // PID Parameters
+    double Kp = 1.5;     // Proportional gain
+    double Ki = 0.80;    // Integral gain
+    double Kd = 1.2;     // Derivative gain
+
+    // Control Variables
+    double setPoint = 25.0;          // Target distance (cm)
+    double setpointVariance = 0.5;   // Acceptable deviation
+    const double outputLimitMin = 125;
+    const double outputLimitMax = 255;
    ```
 
 2. **PID Algorithm Implementation**
+
    ```cpp
-   // Time Management
-   unsigned long currentTime = millis();
-   float dt = (currentTime - lastTime) / 1000.0;
-   lastTime = currentTime;
-   
-   // Distance Measurement
-   float distance = readUltrasonic();
-   
-   // Error Calculations
-   double error = SETPOINT_CM - distance;
-   double p_term = Kp * error;
-   
-   integral_sum += error * dt;
-   double i_term = Ki * integral_sum;
-   
-   double derivative = (error - last_error) / dt;
-   double d_term = Kd * derivative;
-   last_error = error;
-   
-   // Final Output
-   float output = p_term + i_term + d_term;
+    double computePID() {
+      double deltaTime = (double)(currentTime - previousTime) / 1000.0;
+
+      // Proportional Term
+      propError = setPoint - Input;
+      double pTerm = fabs(Kp * propError);
+
+      // Integral Term
+      integralError += propError * deltaTime;
+      integralError = constrain(integralError, outputLimitMin, outputLimitMax);
+      double iTerm = Ki * integralError;
+
+      // Derivative Term
+      diffError = (propError - lastPropError) / deltaTime;
+      double dTerm = Kd * diffError;
+
+      // Compute and Constrain Output
+      double output = pTerm + iTerm + dTerm;
+      output = constrain(output, outputLimitMin, outputLimitMax);
+
+      lastPropError = propError;
+      return output;
+    }
    ```
 
 3. **Safety Implementation**
+
    - Output clamping: `constrain(output, -MAX_SPEED, MAX_SPEED)`
    - Direction control based on output sign
    - PWM speed application to motors
