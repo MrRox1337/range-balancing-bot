@@ -75,44 +75,74 @@ Critical safety protocols has to be embedded in the software, including output c
 
 ### Phase 2: Conveyor Integration
 
-MOUNT THE STEPPER MOTOR: Mount the NEMA stepper motor to the frame and couple its shaft to the drive roller. This roller will move the belt. Make sure the tension is proper between rollers. Mount the stepper motor driver (A4988) and the potentiometer.
+1. **Mechanical Assembly**
+   - Mount NEMA stepper motor to frame
+   - Couple motor shaft to drive roller
+   - Install and tension conveyor belt
+   - Mount A4988 driver and potentiometer
 
-Connect the A4988's STEP and DIR pins to two digital pins on the Arduino. Connect the potentiometer's output to an Analog pin on the Arduino. Connect the stepper motor's four wires to the A4988's outputs.
+2. **Electronic Setup**
+   - Connect A4988 STEP/DIR pins to Arduino digital pins
+   - Wire potentiometer to Arduino analog input
+   - Connect stepper motor to A4988 outputs
+   - **Important**: Wire 12V power supply to A4988 Vcc/GND
 
-IMPORTANT: Connect the separate power supply 12V to the A4988's motor power input Vcc and GND.
+3. **Testing**
+   - Write test sketch for basic functionality
+   - Implement potentiometer reading (0-1023 range)
+   - Map values to stepper motor delay times
+   - Verify speed control via potentiometer
 
-TEST CONVEYOR: Write a test sketch. Read the potentiometer's value and map() the function to convert the 0-1023 value into a delay time for the stepper motor. Verify that you can control the conveyor speed by turning the knob.
+### Phase 3: PID Implementation
 
-PHASE 3: PID Implementation and Tuning
+1. **Control Loop Setup**
+   ```cpp
+   // Constants
+   const float SETPOINT_CM = 12.0;
+   
+   // PID Gains
+   double Kp = 1.0;   // Proportional
+   double Ki = 0.15;  // Integral
+   double Kd = 0.04;  // Derivative
+   ```
 
-ESTABLISH THE CONTROL LOOP:
-Define constants: float SETPOINT_CM = 12.
-Define gains:
-double Kp = 1.0;
-double Ki = 0.15;
-double Kd = 0.04;.
+2. **PID Algorithm Implementation**
+   ```cpp
+   // Time Management
+   unsigned long currentTime = millis();
+   float dt = (currentTime - lastTime) / 1000.0;
+   lastTime = currentTime;
+   
+   // Distance Measurement
+   float distance = readUltrasonic();
+   
+   // Error Calculations
+   double error = SETPOINT_CM - distance;
+   double p_term = Kp * error;
+   
+   integral_sum += error * dt;
+   double i_term = Ki * integral_sum;
+   
+   double derivative = (error - last_error) / dt;
+   double d_term = Kd * derivative;
+   last_error = error;
+   
+   // Final Output
+   float output = p_term + i_term + d_term;
+   ```
 
-Create the PID logic:
-distance = readUltrasonic();
-unsigned long currentTime = millis(); float dt = (now - lastTime) / 1000.0; lastTime = now;
+3. **Safety Implementation**
+   - Output clamping: `constrain(output, -MAX_SPEED, MAX_SPEED)`
+   - Direction control based on output sign
+   - PWM speed application to motors
 
-CALCULATE ERROR: double error = SETPOINT_CM - distance;
-CALCULATE PROPORTIONAL TERM: double p_term = Kp _ error;
-CALCULATE INTEGRAL ERROR: integral_sum += error _ dt; float i_term = Ki _ integral_sum;
-CALCULATE DERIVATIVE TERM: double derivative = (error - last_error) / dt; double d_term = Kd _ derivative; last_error = error;
-
-CALCULATE OUTPUT: float output = p_term + i_term + d_term;
-
-SET SAFETY LIMITS:
-constrain(output, MAX_SPEED, MAX_SPEED);
-Apply to motors: Use the pwm_speed to drive the motors. If pwm_speed is positive, move forward if negative, move backward.
-Keep Tuning the Bot based on the conveyor belt surface and the length of conveyor.
-
-Final Test:
-Run the robot to maintain its position from the wall.
-Test the final system turn on the conveyor belt and the PID loop should now be active enough to correct for these disturbances and maintain its position.
-
-Test your safety systems (max speed and large-error-stop).
+4. **System Testing**
+   - Basic position maintenance
+   - Conveyor operation interference testing
+   - Safety system verification
+     - Maximum speed limits
+     - Large-error emergency stop
+     - System stability checks
 
 ## Results
 
