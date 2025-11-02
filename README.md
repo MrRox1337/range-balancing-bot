@@ -1,6 +1,6 @@
 # Range Balancing Bot
 
-An autonomous vehicle system that maintains a fixed distance from walls while operating a conveyor mechanism.
+An autonomous vehicle system that maintains a fixed distance from walls or a moving object while operating an open ground or conveyor mechanism.
 
 ## Project Information
 
@@ -11,7 +11,7 @@ An autonomous vehicle system that maintains a fixed distance from walls while op
 
 ## Problem Statement
 
-How can an autonomous vehicle accurately maintain a fixed distance from a wall or boundary while its conveyor mechanism is manipulating objects and experiencing manual user interactions?
+How can an autonomous vehicle accurately maintain a fixed distance from a wall or boundary while on a conveyor belt or a manually manipulated boundary when placed on the floor?
 
 ## Solution Overview
 
@@ -38,17 +38,24 @@ This project implements a closed-loop feedback system using an Arduino microcont
 - Safety protocols including:
   - Output clamping on PID controller
   - Maximum speed limits
-  - Emergency stop on large-magnitude errors
 
-This usually involves an iterative tuning process:Start with Ki and Kd at zero. Increase or decrease Kp until the robot starts to oscillate around the Setpoint.Reduce or increase Kp to about half the value that caused oscillations. Slowly increase or decrease Ki to eliminate any small, persistent steady-state error. Slowly increase or decrease Kd to reduce overshoot and dampen oscillations caused by Kp.
+## Tuning Approach
+
+This involved an iterative tuning process:
+
+- Start with Ki and Kd at zero
+- Increase or decrease Kp until the robot starts to oscillate around the Setpoint.
+- Reduce or increase Kp to about half the value that caused oscillations.
+- Slowly increase or decrease Ki to eliminate any small, persistent steady-state error.
+- Slowly increase or decrease Kd to reduce overshoot and dampen oscillations caused by Kp.
 
 The core solution is a PID controller that dynamically modulates the vehicle's velocity to maintain a fixed Setpoint distance from a wall. An ultrasonic sensor continuously provides the real-time distance measurement, which serves as the Process Variable (PV).
 
-The PID algorithm computes the error signal (e=SP−PV) and generates a corresponding Manipulated Variable by applying proportional (Kp ), integral (Ki), and derivative (Kd) gains. This MV is translated into a Pulse Width Modulation (PWM) signal, which is fed to an L298N H-bridge motor driver.
+The PID algorithm computes the error signal (e=SP−PV) and generates a corresponding Manipulated Variable by applying proportional (Kp ), integral (Ki), and derivative (Kd) gains. This MV is translated into a Pulse Width Modulation (PWM) signal, which is fed to an L293D H-bridge motor driver.
 
 The driver, in turn, powers the DC propulsion motor, thus forming a system that actively corrects for positional drift. This control loop operates concurrently with a secondary system: a user-adjustable conveyor belt driven by a NEMA stepper motor, whose speed is governed by analog input from a potentiometer.
 
-Critical safety protocols has to be embedded in the software, including output clamping on the PID controller to a maximum speed limit and a fault-detection mechanism that triggers an emergency stop upon sensing, large-magnitude error values.
+Critical safety protocols were embedded in the software, including output clamping on the PID controller to a maximum speed limit (255 PWM) and a minimum speed floor (125 PWM) to prevent H-bridge thermal damage from stall current when the robot's weight prevents movement at lower speeds.
 
 ## Implementation Process
 
@@ -61,12 +68,17 @@ Critical safety protocols has to be embedded in the software, including output c
    - Install core electronics (Arduino, L298N, buck converter, battery)
    - Mount ultrasonic sensor facing tracking wall
 
+![Range Balancing Bot](/media/robot-isometric-view.jpg)
+
 2. **Wiring**
 
    - Connect battery to L298N (VCC and GND)
    - Wire L293D outputs to DC motors
    - Connect control pins to Arduino
    - Configure PWM pins for speed control
+     ![Robot Wiring](/media/car-wiring.png)  
+     ![Range Balancing Bot Power Connection](/media/robot-bottom-view.jpg)
+     ![Range Balancing Bot Sensors and Actuator Wiring](/media/robot-top-view.jpg)
 
 3. **Initial Testing**
    - Upload basic movement test sketch
@@ -81,6 +93,9 @@ Critical safety protocols has to be embedded in the software, including output c
    - Couple motor shaft to drive roller
    - Install and tension conveyor belt
    - Mount A4988 driver and potentiometer
+     ![Conveyor Belt Hardware Design](/media/conveyor-belt-construct.jpg)
+     ![Conveyor Belt Wiring](/media/conveyor-wiring.png)
+     ![Conveyor Belt Circuit](/media/conveyor-circuit.jpeg)
 
 2. **Electronic Setup**
 
@@ -176,7 +191,8 @@ Critical safety protocols has to be embedded in the software, including output c
 
 3. **Safety Implementation**
 
-   - Output clamping: `constrain(output, -MAX_SPEED, MAX_SPEED)`
+   - Output clamping: `constrain(output, outputLimitMin, outputLimitMax)`
+   - Minimum speed floor (125 PWM) to prevent H-bridge overheating due to high stall current when robot mass prevents movement at lower PWM values
    - Direction control based on output sign
    - PWM speed application to motors
 
@@ -190,32 +206,64 @@ Critical safety protocols has to be embedded in the software, including output c
 
 ## Results
 
-[Content to be added]
+### Floor Operation Performance
+
+The robot demonstrated excellent performance in maintaining a target distance of 25 cm from walls during floor operation. Under optimal conditions (wall surface parallel to the sensor), the system achieved:
+
+- Steady-state position within ±0.5 cm of target (24.5-25.5 cm range)
+- Consistent response to moving wall surfaces
+- Reliable position correction and maintenance
+
+When encountering non-parallel wall surfaces, the system exhibited:
+
+- Increased settling time due to ultrasonic sensor echo variations
+- Eventually achieved steady state despite initial difficulties
+- Maintained stability once settled
+
+### Conveyor System Limitations
+
+The conveyor system implementation faced significant mechanical challenges:
+
+- Excessive robot mass exceeded the conveyor belt's operational capacity
+- Frequent mechanical coupling failures between stepper motor and drive shaft
+- PID parameters optimized for floor operation proved incompatible with conveyor dynamics
+- Project scope constraints led to prioritizing floor operation optimization
+
+Based on these findings, development efforts were concentrated on perfecting the floor-based operation, where the system demonstrated reliable and precise distance management capabilities.
+
+[![Range Balancing Bot Demo](https://img.youtube.com/vi/GML_GhrLPKk/0.jpg)](https://youtu.be/GML_GhrLPKk?si=rAYUrBw3It0nVsG6)
 
 ## Challenges and Solutions
 
 ### Vehicle Control
 
 - **Challenge**: Free wheel causing directional instability
-- **Solution**: Implemented 10% speed increase on right wheel for stability
+- **Solution**: Implemented 10% speed decrease on right wheel for stability
 
-### Conveyor System
+### Conveyor System (Abandoned)
 
 - **Challenge 1**: Belt tension and surface friction issues
 
   - Initial attempt: Added paper tape layer for increased roughness
-  - Final solution: [Content to be added]
+  - Final solution: Increased development time so conveyor abandoned
 
 - **Challenge 2**: Motor slippage due to worn 3D printed holders
   - Temporary fix: New holders with hot glue reinforcement
-  - Long-term solution: [Content to be added]
+  - Long-term solution: Develop screw and nut lock to hold the stepper motors but project was abandoned as conveyor belt was out of scope.
 
 ## Contribution Matrix
 
-| Task               | Aman Mishra | Arman Shaikh |
-| ------------------ | ----------- | ------------ |
-| [Task Description] | [%]         | [%]          |
+| Task                | Aman Mishra | Arman Shaikh |
+| ------------------- | ----------- | ------------ |
+| Hardware Assembly   | [60%]       | [40%]        |
+| Simulation Sketches | [20%]       | [80%]        |
+| Electrical Wiring   | [70%]       | [30%]        |
+| Robot PID Tuning    | [50%]       | [50%]        |
+| Project Report      | [25%]       | [75%]        |
+| Demonstration Video | [50%]       | [50%]        |
 
 ## References
 
-[Content to be added]
+- VSCode Copilot was used in the documentation of the code. In addition it was used for correcting all grammatical errors and improving the layout of README.md in the project.
+- AccelStepper.h example code for the conveyor belt code for continuous rotation at set speed.
+- No intellectual property was made using AI.
