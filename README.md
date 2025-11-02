@@ -233,7 +233,7 @@ Based on these findings, development efforts were concentrated on perfecting the
 
 Demonstration Video: https://www.youtube.com/embed/GML_GhrLPKk
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/GML_GhrLPKk" title="Range Balancing Bot Demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![Range Balancing Bot Demo](https://img.youtube.com/vi/GML_GhrLPKk/0.jpg)](https://youtu.be/GML_GhrLPKk?si=rAYUrBw3It0nVsG6)
 
 ## Challenges and Solutions
 
